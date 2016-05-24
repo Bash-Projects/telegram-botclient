@@ -49,7 +49,8 @@ function getMessage {
 # takes input from pipe
 # returns newline separated json results
 function get_results {
-	jq -M -r '.result | map(tostring+"\n") | add'
+	jq -r '.result | map(tostring+"\n") | add' |\
+		sed '/^\s*$/d'
 }
 
 # offset is what consumes messages
@@ -124,8 +125,9 @@ done < /dev/stdin &
 
 # output loop
 while true; do
-	while read result; do
+	IFS=$'\n'
+	for result in `getMessage | get_results`; do
 		process_input "$result"
-	done <<< `getMessage | get_results`
+	done
 	sleep ${polling_delay}
 done
